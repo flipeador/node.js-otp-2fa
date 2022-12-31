@@ -1,31 +1,33 @@
-﻿'use strict';
+'use strict';
 
 const crypto = require('node:crypto');
+const { Buffer } = require('node:buffer');
 const { URL, URLSearchParams } = require('node:url');
 
-function leftpad(str, len)
-{
-    return '0'.repeat(Math.max(0, len-str.length)) + str;
-}
+// function padStart(str, len)
+// {
+//     return '0'.repeat(Math.max(0, len-str.length)) + str;
+// }
 
 function padotp(otp, digits)
 {
-    return leftpad(`${otp}`, digits).slice(-digits);
+    return `${otp}`.padStart(digits, '0').slice(-digits);
+    // return leftpad(`${otp}`, digits).slice(-digits);
 }
 
 function base32Decode(base32)
 {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
     let bits = '', hex = '';
-    for (const char of base32.replace(/=+$/, ''))
+    for (const char of base32.replace(/[=]+$/u, ''))
     {
         const index = chars.indexOf(char.toUpperCase());
         if (index === -1)
             throw new Error(`Invalid character: ${char}`);
-        bits += leftpad(index.toString(2), 5);
+        bits += index.toString(2).padStart(5, '0');
     }
     for (let i = 0; i + 8 <= bits.length; i += 8)
-        hex += leftpad(parseInt(bits.slice(i,i+8),2).toString(16), 2);
+        hex += parseInt(bits.slice(i,i+8),2).toString(16).padStart(2, '0');
     return hex;
 }
 
@@ -62,7 +64,7 @@ function hotp(algorithm, secret, counter)
 function totp(algorithm, secret, time, length)
 {
     const Ct = Math.floor(time/length).toString(16);
-    const token = Buffer.from(leftpad(Ct, 16), 'hex');
+    const token = Buffer.from(Ct.padStart(16, '0'), 'hex');
     return hotp(algorithm, secret, token);
 }
 
